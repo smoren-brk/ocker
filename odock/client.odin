@@ -1,0 +1,65 @@
+package odock
+
+import "core:fmt"
+import "core:mem"
+import "core:strings"
+import curl "vendor:curl"
+
+// curl is streaming the goddamn data so
+// we need to process it byte by byte
+write_callback :: proc(
+    ptr: rawptr,
+    size: int,
+    nmemb: int,
+    userdata: rawptr,
+) -> int {
+    number_of_bytes := size * nmemb
+
+    buffer := cast(^[dynamic]u8)userdata
+    chunk := mem.slice_ptr(cast(^u8)ptr, number_of_bytes)
+
+    append(buffer, ..chunk)
+
+    return number_of_bytes
+}
+
+client_init :: proc() {
+    // init curl
+    if curl.global_init(curl.GLOBAL_DEFAULT) != .E_OK {
+        fmt.println("Error while initializing curl")
+        return
+    }
+}
+
+request :: proc(url_command: string) -> ([dynamic]u8, Curl_Error) {
+    client_init()
+    defer curl.global_cleanup()
+
+    DOCKER_SOCKET :: "/var/run/docker.sock"
+
+    request_url := strings.concatenate({"http://localhost/", url_command})
+    response := make([dynamic]u8)
+
+    // init easy - single basic request
+    mono_request := curl.easy_init()
+    if mono_request == nil {
+        fmt.println("Error while initializing curl")
+        return response, .Curl_Init_Failed
+    }
+    defer curl.easy_cleanup(mono_request)
+
+    // set parameters for api call
+    curl.easy_setopt(mono_request, .URL, request_url)
+    curl.easy_setopt(mono_request, .UNIX_SOCKET_PATH, DOCKER_SOCKET)
+    curl.easy_setopt(mono_request, .WRITEFUNCTION, write_callback)
+    curl.easy_setopt(mono_request, .WRITEDATA, &response)
+
+    response_code := curl.easy_perform(mono_request)
+    if response_code != .E_OK {
+        fmt.println(curl.easy_strerror(response_code))
+        return response, .Request_Failed
+    }
+
+    return response, .None
+}
+
