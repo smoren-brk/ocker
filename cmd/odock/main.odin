@@ -8,8 +8,7 @@ import odock "../../odock"
 version_info :: proc() {
     version_info, err := odock.version()
     if err != nil {
-        fmt.println("Version request failed")
-        return
+        panic("Version request failed")
     }
 
     fmt.printf(
@@ -19,9 +18,24 @@ version_info :: proc() {
     )
 }
 
+list_images :: proc() {
+    image_list, err := odock.list_images()
+    if err != nil {
+        panic("Image listing failed")
+    }
+
+    for image in image_list {
+        fmt.printf(
+            "[Id] %s, with size %d was created at %d\n",
+            image.Id, image.Size, image.Created
+        )
+    }
+}
+
 main :: proc() {
     Options :: struct {
-        version: bool `usage:"Show docker version info"`
+        version: bool `usage:"Show docker version info"`,
+        image_ls: bool `usage:"List images"`,
     }
 
     opt: Options
@@ -29,6 +43,10 @@ main :: proc() {
 
     if opt.version {
         version_info()
+    }
+
+    if opt.image_ls {
+        list_images()
     }
 }
 
