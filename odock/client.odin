@@ -1,5 +1,6 @@
 package odock
 
+import "core:encoding/json"
 import "core:fmt"
 import "core:mem"
 import "core:strings"
@@ -63,3 +64,22 @@ request :: proc(url_command: string) -> ([dynamic]u8, Curl_Error) {
     return response, .None
 }
 
+http_get :: proc($T: typeid, url: string) -> (T, Response_Error) {
+    typ: T
+
+    response, curl_err := request(url)
+    defer delete(response)
+    if curl_err != nil {
+        fmt.println("Invalid response")
+        return typ, .Invalid_Response
+    }
+
+    json_err := json.unmarshal(response[:], &typ)
+    if json_err != nil {
+        fmt.println("Failed to unmarshal version response")
+        fmt.println(json_err)
+        return typ, .Json_Parse_Failed
+    }
+
+    return typ, .None
+}
