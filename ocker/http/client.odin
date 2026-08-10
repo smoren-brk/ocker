@@ -1,4 +1,4 @@
-package ocker
+package http
 
 import "core:encoding/json"
 import "core:fmt"
@@ -64,7 +64,7 @@ request :: proc(url_command: string) -> ([dynamic]u8, Curl_Error) {
     return response, .None
 }
 
-http_get :: proc($T: typeid, url: string) -> (T, Response_Error) {
+get :: proc($T: typeid, url: string) -> (T, Response_Error) {
     typ: T
 
     response, curl_err := request(url)

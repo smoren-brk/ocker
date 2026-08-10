@@ -1,5 +1,7 @@
 package ocker
 
+import "http"
+
 Platform :: struct {
     Name: string,
 }
@@ -38,7 +40,7 @@ Version_Info :: struct {
     BuildTime:     string,
 }
 
-version :: proc() -> (Version_Info, Response_Error) {
-    return http_get(Version_Info, "version")
+version :: proc() -> (Version_Info, http.Response_Error) {
+    return http.get(Version_Info, "version")
 }
 

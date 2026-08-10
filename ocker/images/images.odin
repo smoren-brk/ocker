@@ -1,6 +1,7 @@
-package ocker
+package images
 
 import "core:fmt"
+import "http"
 
 Image_Metadata :: struct {
     LastTagTime: string
@@ -57,11 +58,11 @@ Image :: struct {
     Size: u64,
 }
 
-list_images :: proc() -> (Image_List, Response_Error) {
-    return http_get(Image_List, "images/json")
+list_images :: proc() -> (Image_List, http.Response_Error) {
+    return http.get(Image_List, "images/json")
 }
 
-parse_image :: proc(image_id: string) -> (Image, Response_Error) {
+parse_image :: proc(image_id: string) -> (Image, http.Response_Error) {
     url := fmt.aprintf("images/%s/json", image_id)
-    return http_get(Image, url)
+    return http.get(Image, url)
 }
