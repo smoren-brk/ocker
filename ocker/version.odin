@@ -1,6 +1,4 @@
-package odock
-
-import "core:fmt"
+package ocker
 
 Platform :: struct {
     Name: string,

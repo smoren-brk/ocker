@@ -3,10 +3,10 @@ package main
 import "core:os"
 import "core:fmt"
 import "core:flags"
-import odock "../../odock"
+import ocker "../../ocker"
 
 version_info :: proc() {
-    version_info, err := odock.version()
+    version_info, err := ocker.version()
     if err != nil {
         panic("Version request failed")
     }
@@ -19,7 +19,7 @@ version_info :: proc() {
 }
 
 list_images :: proc() {
-    image_list, err := odock.list_images()
+    image_list, err := ocker.list_images()
     if err != nil {
         panic("Image listing failed")
     }

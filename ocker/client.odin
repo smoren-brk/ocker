@@ -1,4 +1,4 @@
-package odock
+package ocker
 
 import "core:encoding/json"
 import "core:fmt"
