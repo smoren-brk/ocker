@@ -5,6 +5,7 @@ import "core:fmt"
 import "core:flags"
 import ocker "../ocker"
 import images "../ocker/images"
+import http "../ocker/http"
 
 version_info :: proc() {
     version_info, err := ocker.version()
@@ -40,10 +41,15 @@ list_images :: proc() {
     }
 }
 
+hello_world :: proc() {
+    http.post(images.Image, "containers/create", `{ "Image": "alpine", "Cmd": ["echo", "hello world"] }`)
+}
+
 main :: proc() {
     Options :: struct {
         version: bool `usage:"Show docker version info"`,
         image_ls: bool `usage:"List images"`,
+        hellope: bool `usage:Run hello world"`
     }
 
     opt: Options
@@ -56,4 +62,9 @@ main :: proc() {
     if opt.image_ls {
         list_images()
     }
+
+    if opt.hellope {
+        hello_world()
+    }
 }
+
