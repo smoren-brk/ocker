@@ -3,7 +3,8 @@ package main
 import "core:os"
 import "core:fmt"
 import "core:flags"
-import ocker "../../ocker"
+import ocker "../ocker"
+import images "../ocker/images"
 
 version_info :: proc() {
     version_info, err := ocker.version()
@@ -19,15 +20,22 @@ version_info :: proc() {
 }
 
 list_images :: proc() {
-    image_list, err := ocker.list_images()
+    image_list, err := images.list_images()
     if err != nil {
         panic("Image listing failed")
     }
 
     for image in image_list {
+        image_hist_entry, _ := images.image_history(image.Id)
+
         fmt.printf(
             "[Id] %s, with size %d was created at %d\n",
             image.Id, image.Size, image.Created
+        )
+
+        fmt.printf(
+            "[Id] %s, was created at %d by %s\n",
+            image.Id, image.Created
         )
     }
 }
@@ -49,4 +57,3 @@ main :: proc() {
         list_images()
     }
 }
-

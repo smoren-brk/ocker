@@ -1,7 +1,7 @@
 package images
 
 import "core:fmt"
-import "http"
+import "../http"
 
 Image_Metadata :: struct {
     LastTagTime: string
@@ -66,3 +66,9 @@ parse_image :: proc(image_id: string) -> (Image, http.Response_Error) {
     url := fmt.aprintf("images/%s/json", image_id)
     return http.get(Image, url)
 }
+
+image_history :: proc(image_id: string) -> ([dynamic]Image, http.Response_Error) {
+    url := fmt.aprintf("images/%s/history", image_id)
+    return http.get([dynamic]Image, url)
+}
+

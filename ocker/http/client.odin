@@ -6,6 +6,12 @@ import "core:mem"
 import "core:strings"
 import curl "vendor:curl"
 
+Request_type :: enum {
+    None,
+    Get,
+    Post,
+}
+
 // curl is streaming the goddamn data so
 // we need to process it byte by byte
 write_callback :: proc(
@@ -32,13 +38,14 @@ client_init :: proc() {
     }
 }
 
-request :: proc(url_command: string) -> ([dynamic]u8, Curl_Error) {
+request :: proc(url_command: string, request_type: Request_type, payload: string = "{}") -> ([dynamic]u8, Curl_Error) {
     client_init()
     defer curl.global_cleanup()
 
     DOCKER_SOCKET :: "/var/run/docker.sock"
 
     request_url := strings.concatenate({"http://localhost/", url_command})
+    // TODO: check if string builder can be used here
     response := make([dynamic]u8)
 
     // init easy - single basic request
@@ -55,6 +62,18 @@ request :: proc(url_command: string) -> ([dynamic]u8, Curl_Error) {
     curl.easy_setopt(mono_request, .WRITEFUNCTION, write_callback)
     curl.easy_setopt(mono_request, .WRITEDATA, &response)
 
+    switch request_type {
+        case .None: {}
+        case .Get: {}
+        case .Post: {
+            curl.easy_setopt(mono_request, .POST, i64(1))
+            curl.easy_setopt(mono_request, .COPYPOSTFIELDS, strings.clone_to_cstring(payload))
+            headers := curl.slist_append(nil, "Content-Type: application/json")
+            curl.easy_setopt(mono_request, .HTTPHEADER, headers)
+            defer curl.slist_free_all(headers)
+        }
+    }
+
     response_code := curl.easy_perform(mono_request)
     if response_code != .E_OK {
         fmt.println(curl.easy_strerror(response_code))
@@ -67,7 +86,7 @@ request :: proc(url_command: string) -> ([dynamic]u8, Curl_Error) {
 get :: proc($T: typeid, url: string) -> (T, Response_Error) {
     typ: T
 
-    response, curl_err := request(url)
+    response, curl_err := request(url, Request_type.Get)
     defer delete(response)
     if curl_err != nil {
         fmt.println("Invalid response")
@@ -83,3 +102,24 @@ get :: proc($T: typeid, url: string) -> (T, Response_Error) {
 
     return typ, .None
 }
+
+post :: proc($T: typeid, url: string, payload: string) -> (T, Response_Error) {
+    typ: T
+
+    response, curl_err := request(url, Request_type.Post, payload)
+    defer delete(response)
+    if curl_err != nil {
+        fmt.println("Invalid response")
+        return typ, .Invalid_Response
+    }
+
+    json_err := json.unmarshal(response[:], &typ)
+    if json_err != nil {
+        fmt.println("Failed to unmarshal version response")
+        fmt.println(json_err)
+        return typ, .Json_Parse_Failed
+    }
+
+    return typ, .None
+}
+
