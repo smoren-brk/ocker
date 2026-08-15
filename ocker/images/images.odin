@@ -72,3 +72,7 @@ image_history :: proc(image_id: string) -> ([dynamic]Image, http.Response_Error)
     return http.get([dynamic]Image, url)
 }
 
+pull :: proc(image: string, tag: string) -> (Image, http.Response_Error) {
+    url := fmt.aprintf("images/create?fromImage=%s&tag=%s", image, tag)
+    return http.post(Image, url)
+}

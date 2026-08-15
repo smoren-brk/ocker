@@ -27,16 +27,9 @@ list_images :: proc() {
     }
 
     for image in image_list {
-        image_hist_entry, _ := images.image_history(image.Id)
-
         fmt.printf(
             "[Id] %s, with size %d was created at %d\n",
             image.Id, image.Size, image.Created
-        )
-
-        fmt.printf(
-            "[Id] %s, was created at %d by %s\n",
-            image.Id, image.Created
         )
     }
 }
@@ -45,11 +38,16 @@ hello_world :: proc() {
     http.post(images.Image, "containers/create", `{ "Image": "alpine", "Cmd": ["echo", "hello world"] }`)
 }
 
+pull_alpine :: proc() {
+    images.pull("alpine", "latest")
+}
+
 main :: proc() {
     Options :: struct {
         version: bool `usage:"Show docker version info"`,
         image_ls: bool `usage:"List images"`,
-        hellope: bool `usage:Run hello world"`
+        hellope: bool `usage:"Run hello world"`,
+        pull: bool `usage:"Pull alpine latest"`
     }
 
     opt: Options
@@ -66,5 +64,8 @@ main :: proc() {
     if opt.hellope {
         hello_world()
     }
-}
 
+    if opt.pull {
+        pull_alpine()
+    }
+}

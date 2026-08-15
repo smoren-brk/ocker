@@ -1,5 +1,6 @@
 package http
 
+import "base:runtime"
 import "core:encoding/json"
 import "core:fmt"
 import "core:mem"
@@ -14,12 +15,13 @@ Request_type :: enum {
 
 // curl is streaming the goddamn data so
 // we need to process it byte by byte
-write_callback :: proc(
+write_callback :: proc "c" (
     ptr: rawptr,
     size: int,
     nmemb: int,
     userdata: rawptr,
 ) -> int {
+    context = runtime.default_context()
     number_of_bytes := size * nmemb
 
     buffer := cast(^[dynamic]u8)userdata
@@ -62,15 +64,17 @@ request :: proc(url_command: string, request_type: Request_type, payload: string
     curl.easy_setopt(mono_request, .WRITEFUNCTION, write_callback)
     curl.easy_setopt(mono_request, .WRITEDATA, &response)
 
+    headers: ^curl.slist
+    defer curl.slist_free_all(headers)
+
     switch request_type {
         case .None: {}
         case .Get: {}
         case .Post: {
             curl.easy_setopt(mono_request, .POST, i64(1))
             curl.easy_setopt(mono_request, .COPYPOSTFIELDS, strings.clone_to_cstring(payload))
-            headers := curl.slist_append(nil, "Content-Type: application/json")
+            headers = curl.slist_append(nil, "Content-Type: application/json")
             curl.easy_setopt(mono_request, .HTTPHEADER, headers)
-            defer curl.slist_free_all(headers)
         }
     }
 
@@ -103,7 +107,7 @@ get :: proc($T: typeid, url: string) -> (T, Response_Error) {
     return typ, .None
 }
 
-post :: proc($T: typeid, url: string, payload: string) -> (T, Response_Error) {
+post :: proc($T: typeid, url: string, payload: string = "") -> (T, Response_Error) {
     typ: T
 
     response, curl_err := request(url, Request_type.Post, payload)
@@ -122,4 +126,3 @@ post :: proc($T: typeid, url: string, payload: string) -> (T, Response_Error) {
 
     return typ, .None
 }
-
