@@ -9,8 +9,8 @@ import curl "vendor:curl"
 
 Request_type :: enum {
     None,
-    Get,
-    Post,
+    GET,
+    POST,
 }
 
 // curl is streaming the goddamn data so
@@ -69,8 +69,8 @@ request :: proc(url_command: string, request_type: Request_type, payload: string
 
     switch request_type {
         case .None: {}
-        case .Get: {}
-        case .Post: {
+        case .GET: {}
+        case .POST: {
             curl.easy_setopt(mono_request, .POST, i64(1))
             curl.easy_setopt(mono_request, .COPYPOSTFIELDS, strings.clone_to_cstring(payload))
             headers = curl.slist_append(nil, "Content-Type: application/json")
@@ -78,7 +78,17 @@ request :: proc(url_command: string, request_type: Request_type, payload: string
         }
     }
 
+    fmt.printf("%s\t%s\n\t%s\n", request_type, request_url, payload)
+
+    http_response_code: i64
     response_code := curl.easy_perform(mono_request)
+    curl.easy_getinfo(mono_request, .RESPONSE_CODE, &http_response_code)
+
+    if http_response_code < 200 || http_response_code >= 300 {
+        fmt.printf("Docker HTTP %d: %s\n", http_response_code, string(response[:]))
+        return response, .Request_Failed
+    }
+
     if response_code != .E_OK {
         fmt.println(curl.easy_strerror(response_code))
         return response, .Request_Failed
@@ -90,7 +100,7 @@ request :: proc(url_command: string, request_type: Request_type, payload: string
 get :: proc($T: typeid, url: string) -> (T, Response_Error) {
     typ: T
 
-    response, curl_err := request(url, Request_type.Get)
+    response, curl_err := request(url, Request_type.GET)
     defer delete(response)
     if curl_err != nil {
         fmt.println("Invalid response")
@@ -105,12 +115,23 @@ get :: proc($T: typeid, url: string) -> (T, Response_Error) {
     }
 
     return typ, .None
+}
+
+just_post :: proc(url: string, payload: string = "") -> Response_Error {
+    response, curl_err := request(url, Request_type.POST, payload)
+    defer delete(response)
+    if curl_err != nil {
+        fmt.println("Invalid response")
+        return .Invalid_Response
+    }
+
+    return .None
 }
 
 post :: proc($T: typeid, url: string, payload: string = "") -> (T, Response_Error) {
     typ: T
 
-    response, curl_err := request(url, Request_type.Post, payload)
+    response, curl_err := request(url, Request_type.POST, payload)
     defer delete(response)
     if curl_err != nil {
         fmt.println("Invalid response")
@@ -126,3 +147,4 @@ post :: proc($T: typeid, url: string, payload: string = "") -> (T, Response_Erro
 
     return typ, .None
 }
+

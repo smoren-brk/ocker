@@ -23,6 +23,7 @@ version_info :: proc() {
 
 list_images :: proc() {
     image_list, err := image.list_images()
+    defer delete(image_list)
     if err != nil {
         panic("Image listing failed")
     }
@@ -37,6 +38,7 @@ list_images :: proc() {
 
 list_containers :: proc() {
     containers, err := container.list()
+    defer delete(containers)
     if err != nil {
         panic("Image listing failed")
     }
@@ -47,7 +49,8 @@ list_containers :: proc() {
 }
 
 hello_world :: proc() {
-    http.post(image.Image, "containers/create", `{ "Image": "alpine", "Cmd": ["echo", "hello world"] }`)
+    repsonse := container.create("alpine", `["sleep","20"]`)
+    container.start(repsonse.Id)
 }
 
 pull_alpine :: proc() {
