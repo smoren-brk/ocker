@@ -1,4 +1,4 @@
-package images
+package image
 
 import "core:fmt"
 import "../http"
@@ -23,18 +23,29 @@ Image_Config :: struct {
     WorkingDir: string,
 }
 
-Image_Descriptor :: struct {
+Image_Annotations :: map[string]string
+
+Image_Platform :: struct {
+    architecture: string,
+    os: string
+}
+
+OCIDescriptor :: struct {
     digest: string,
     mediaType: string,
-    size: u64
+    size: u64,
+    annotations: Image_Annotations,
+    platform: Image_Platform
 }
+
+Image_Labels :: map[string]string
 
 Listed_Image :: struct {
     Containers: u16,
     Created: u64,
-    Descriptor: Image_Descriptor,
+    Descriptor: OCIDescriptor,
     Id: string,
-    Labels: map[string]string,
+    Labels: Image_Labels,
     ParentId: string,
     RepoDigests: [dynamic]string,
     RepoTags: [dynamic]string,
@@ -42,12 +53,10 @@ Listed_Image :: struct {
     Size: u64
 }
 
-Image_List :: [dynamic]Listed_Image
-
 Image :: struct {
     Architecture: string,
     Config: Image_Config,
-    Descriptor: Image_Descriptor,
+    Descriptor: OCIDescriptor,
     Id: string,
     Identity: Image_Identity,
     Metadata: Image_Metadata,
@@ -58,8 +67,8 @@ Image :: struct {
     Size: u64,
 }
 
-list_images :: proc() -> (Image_List, http.Response_Error) {
-    return http.get(Image_List, "images/json")
+list_images :: proc() -> ([dynamic]Listed_Image, http.Response_Error) {
+    return http.get([dynamic]Listed_Image, "images/json")
 }
 
 parse_image :: proc(image_id: string) -> (Image, http.Response_Error) {

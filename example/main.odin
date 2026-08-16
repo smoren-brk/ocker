@@ -3,9 +3,10 @@ package main
 import "core:os"
 import "core:fmt"
 import "core:flags"
-import ocker "../ocker"
-import images "../ocker/images"
-import http "../ocker/http"
+import "../ocker"
+import "../ocker/image"
+import "../ocker/http"
+import "../ocker/container/"
 
 version_info :: proc() {
     version_info, err := ocker.version()
@@ -21,7 +22,7 @@ version_info :: proc() {
 }
 
 list_images :: proc() {
-    image_list, err := images.list_images()
+    image_list, err := image.list_images()
     if err != nil {
         panic("Image listing failed")
     }
@@ -34,12 +35,23 @@ list_images :: proc() {
     }
 }
 
+list_containers :: proc() {
+    containers, err := container.list()
+    if err != nil {
+        panic("Image listing failed")
+    }
+
+    for container in containers {
+       fmt.printf("%s : %s, %s", container.Image, container.State, container.Status)
+    }
+}
+
 hello_world :: proc() {
-    http.post(images.Image, "containers/create", `{ "Image": "alpine", "Cmd": ["echo", "hello world"] }`)
+    http.post(image.Image, "containers/create", `{ "Image": "alpine", "Cmd": ["echo", "hello world"] }`)
 }
 
 pull_alpine :: proc() {
-    images.pull("alpine", "latest")
+    image.pull("alpine", "latest")
 }
 
 main :: proc() {
@@ -47,7 +59,8 @@ main :: proc() {
         version: bool `usage:"Show docker version info"`,
         image_ls: bool `usage:"List images"`,
         hellope: bool `usage:"Run hello world"`,
-        pull: bool `usage:"Pull alpine latest"`
+        pull: bool `usage:"Pull alpine latest"`,
+        ps: bool `usage:"List containers"`
     }
 
     opt: Options
@@ -67,5 +80,9 @@ main :: proc() {
 
     if opt.pull {
         pull_alpine()
+    }
+
+    if opt.ps {
+        list_containers()
     }
 }
