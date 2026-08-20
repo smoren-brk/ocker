@@ -1,12 +1,12 @@
 package ocker
 
-import "http"
+import docker_api "docker-api"
 
 Platform :: struct {
     Name: string,
 }
 
-Component_Details :: struct {
+Details :: struct {
     ApiVersion:       string,
     Arch:             string,
     BuildTime:        string,
@@ -23,7 +23,7 @@ Component_Details :: struct {
 Component :: struct {
     Name:    string,
     Version: string,
-    Details: Component_Details,
+    Details: Details,
 }
 
 Version_Info :: struct {
@@ -40,7 +40,7 @@ Version_Info :: struct {
     BuildTime:     string,
 }
 
-version :: proc() -> (Version_Info, http.Response_Error) {
-    return http.get(Version_Info, "version")
+version :: proc() -> (Version_Info, docker_api.Error) {
+    return docker_api.get(docker_api.Client{}, Version_Info, "version")
 }
 

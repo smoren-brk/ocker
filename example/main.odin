@@ -5,8 +5,7 @@ import "core:fmt"
 import "core:flags"
 import "../ocker"
 import "../ocker/image"
-import "../ocker/http"
-import "../ocker/container/"
+import "../ocker/container"
 
 version_info :: proc() {
     version_info, err := ocker.version()
@@ -22,7 +21,7 @@ version_info :: proc() {
 }
 
 list_images :: proc() {
-    image_list, err := image.list_images()
+    image_list, err := image.list()
     defer delete(image_list)
     if err != nil {
         panic("Image listing failed")
@@ -49,8 +48,12 @@ list_containers :: proc() {
 }
 
 hello_world :: proc() {
-    repsonse := container.create("alpine", `["sleep","20"]`)
-    container.start(repsonse.Id)
+    response, err := container.create("alpine", `["sleep","20"]`)
+    if err != nil {
+        panic("Cannot create container")
+    }
+
+    container.start(response.Id)
 }
 
 pull_alpine :: proc() {

@@ -1,11 +1,13 @@
+#+feature global-context
 package container
 
 import "core:encoding/json"
 import "core:fmt"
 
-import "../http"
+import docker_api "../docker-api"
 import "../image"
-import "../util"
+
+client: docker_api.Client
 
 Create_Response :: struct {
     Id: string,
@@ -31,35 +33,32 @@ Container :: struct {
     ImageManifestDescriptor: image.OCIDescriptor,
     Command: string,
     Created: u64,
-    Labels: image.Image_Labels,
+    Labels: image.Labels,
     State: Container_State,
     Status: string,
 }
 
-list :: proc() -> ([dynamic]Container, http.Response_Error) {
-    util.enroll_unmarshaller(Container_State, container_state_unmarshaller)
-    return http.get([dynamic]Container, "containers/json")
+@(init)
+init :: proc() {
+    json.register_user_unmarshaler(typeid_of(Container_State), container_state_unmarshaller)
 }
 
-// TODO: change cmd to list of strings
-create :: proc(image: string, cmd: string) -> Create_Response {
-    url := "containers/create"
-    cmd := fmt.aprintf(`{{"Image":"%s","Cmd":%s}}`, image, cmd)
-
-    response, err := http.post(Create_Response, url, cmd)
-    if err != nil {
-        panic("Cannot create container")
-    }
-
-    return response
+list :: proc() -> ([dynamic]Container, docker_api.Error) {
+    return docker_api.get(client, [dynamic]Container, "containers/json")
 }
 
-start :: proc(image_id: string) {
-    url := fmt.aprintf("containers/%s/start", image_id)
-    err := http.just_post(url)
-    if err != nil {
-        panic("Cannot start the container")
-    }
+create :: proc(image: string, cmd: string) -> (Create_Response, docker_api.Error) {
+    payload := fmt.aprintf(`{"Image":"%s","Cmd":%s}`, image, cmd)
+    defer delete(payload)
+
+    return docker_api.post(client, Create_Response, "containers/create", payload)
+}
+
+start :: proc(id: string) -> docker_api.Error {
+    url := fmt.aprintf("containers/%s/start", id)
+    defer delete(url)
+
+    return docker_api.send(client, .POST, url)
 }
 
 container_state_unmarshaller :: proc(p: ^json.Parser, v: any) -> json.Unmarshal_Error {
