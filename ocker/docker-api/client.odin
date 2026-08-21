@@ -150,3 +150,17 @@ send :: proc(c: Client, method: Method, path: string, payload: string = "") -> E
     defer delete(raw)
     return err
 }
+
+delete_request :: proc(c: Client, $T: typeid, path: string) -> (T, Error) {
+    raw, err := request(c, .DELETE, path)
+    defer delete(raw)
+
+    result: T
+    if err != nil {
+        return result, err
+    }
+    if err := json.unmarshal(raw, &result); err != nil {
+        return result, .Json_Parse_Failed
+    }
+    return result, .None
+}
