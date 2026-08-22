@@ -8,6 +8,8 @@ import "core:mem"
 import "core:strings"
 import curl "vendor:curl"
 
+import "../query"
+
 // HTTP verb
 Method :: enum {
     GET,
@@ -116,31 +118,47 @@ request :: proc(c: Client, method: Method, path: string, payload: string = "") -
     return response[:], .None
 }
 
-get :: proc(c: Client, $T: typeid, path: string) -> (T, Error) {
+get :: proc(c: Client, $T: typeid, path: string, query_spec: query.Query_Spec = nil) -> (T, Error) {
+    result: T
+    query: string
+
+    if query_spec != nil {
+        query = query.assemble(query_spec)
+    }
+
     raw, err := request(c, .GET, path)
     defer delete(raw)
 
-    result: T
     if err != nil {
         return result, err
     }
+
     if err := json.unmarshal(raw, &result); err != nil {
         return result, .Json_Parse_Failed
     }
+
     return result, .None
 }
 
-post :: proc(c: Client, $T: typeid, path: string, payload: string = "") -> (T, Error) {
+post :: proc(c: Client, $T: typeid, path: string, query_spec: query.Query_Spec = nil, payload: string = "") -> (T, Error) {
+    result: T
+    query: string
+
+    if query_spec != nil {
+        query = query.assemble(query_spec)
+    }
+
     raw, err := request(c, .POST, path, payload)
     defer delete(raw)
 
-    result: T
     if err != nil {
         return result, err
     }
+
     if err := json.unmarshal(raw, &result); err != nil {
         return result, .Json_Parse_Failed
     }
+
     return result, .None
 }
 
