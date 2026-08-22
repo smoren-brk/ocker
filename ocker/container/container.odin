@@ -30,7 +30,7 @@ Container :: struct {
     Names: [dynamic]string,
     Image: string,
     ImageID: string,
-    ImageManifestDescriptor: image.OCIDescriptor,
+    ImageManifestDescriptor: image.OCI_Descriptor,
     Command: string,
     Created: u64,
     Labels: image.Labels,
@@ -51,7 +51,7 @@ create :: proc(image: string, cmd: string) -> (Create_Response, docker_api.Error
     payload := fmt.aprintf(`{"Image":"%s","Cmd":%s}`, image, cmd)
     defer delete(payload)
 
-    return docker_api.post(client, Create_Response, "containers/create", payload)
+    return docker_api.post(client, Create_Response, "containers/create", nil,  payload)
 }
 
 start :: proc(id: string) -> docker_api.Error {

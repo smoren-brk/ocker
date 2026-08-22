@@ -30,7 +30,7 @@ list_images :: proc() {
     for image in image_list {
         fmt.printf(
             "[Id] %s, with size %d was created at %d\n",
-            image.Id, image.Size, image.Created
+            image.ID, image.Size, image.Created
         )
     }
 }

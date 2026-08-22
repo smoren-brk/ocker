@@ -120,10 +120,10 @@ request :: proc(c: Client, method: Method, path: string, payload: string = "") -
 
 get :: proc(c: Client, $T: typeid, path: string, query_spec: query.Query_Spec = nil) -> (T, Error) {
     result: T
-    query: string
+    query_string: string
 
     if query_spec != nil {
-        query = query.assemble(query_spec)
+        query_string, _ = query.assemble(query_spec)
     }
 
     raw, err := request(c, .GET, path)
@@ -142,10 +142,10 @@ get :: proc(c: Client, $T: typeid, path: string, query_spec: query.Query_Spec = 
 
 post :: proc(c: Client, $T: typeid, path: string, query_spec: query.Query_Spec = nil, payload: string = "") -> (T, Error) {
     result: T
-    query: string
+    query_string: string
 
     if query_spec != nil {
-        query = query.assemble(query_spec)
+        query_string, _ = query.assemble(query_spec)
     }
 
     raw, err := request(c, .POST, path, payload)
