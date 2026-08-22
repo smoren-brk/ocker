@@ -1,6 +1,7 @@
 package image
 
 import "core:time"
+import "core:encoding/json"
 
 Metadata :: struct {
     Last_Tag_Time: string `json:"LastTagTime"`
@@ -189,5 +190,11 @@ Inspection :: struct {
     Size: i64,
     Graph_Driver: Driver_Data `json:"GraphDriver"`,
     Metadata: Metadata
+}
+
+Attestation :: struct {
+    Descriptor:    OCI_Descriptor,
+    Predicate_Type: string,
+    Statement:     json.Value,
 }
 
